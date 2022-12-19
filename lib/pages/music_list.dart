@@ -22,17 +22,17 @@ class _MusicListState extends State<MusicList> {
 
   @override
   Widget build(BuildContext context) {
-  fireBaseService.initializeDb();
+  //fireBaseService.initializeDb();
   List<String> playlist = [];
     return Scaffold(
       appBar: AppBar(
         title: const Text('Music List'),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('track',).orderBy('like',descending: true).snapshots(),
+        stream: FirebaseFirestore.instance.collection('track',).orderBy('userLiked', descending: true).snapshots(),
         builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-          listenPlaylist(snapshot, playlist);
           if (snapshot.hasData) {
+            listenPlaylist(snapshot, playlist);
             return Column(
               children: [
                 Expanded(
@@ -54,7 +54,22 @@ class _MusicListState extends State<MusicList> {
                   },
                 )
                 ),
-                initializeIconButton()
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        previousTrack();
+                      }, 
+                      icon: const Icon(Icons.skip_previous)),
+                    initializeIconButton(),
+                    IconButton(
+                      onPressed: () {
+                        skipTrack();
+                      }, 
+                      icon: const Icon(Icons.skip_next)),
+                  ],
+                ),
               ],
             );
           }
@@ -77,9 +92,6 @@ class _MusicListState extends State<MusicList> {
                 icon: const Icon(Icons.pause))
                 : IconButton( 
                   onPressed: () {
-                    setState(() {
-                    isPlaying = false;
-                  });
                   audioPlayer.play();
                   }, 
                   icon: const Icon(Icons.play_arrow));
@@ -89,10 +101,17 @@ class _MusicListState extends State<MusicList> {
     for (int i = 0; i < snapshot.data.docs.length; i++) {
       playlist.add(snapshot.data.docs[i]['url']);
     }
-    audioPlayer.setAudioSource(ConcatenatingAudioSource(
-      children: playlist
-          .map((url) => AudioSource.uri(Uri.parse(url)))
-          .toList(),
+      audioPlayer.setAudioSource(ConcatenatingAudioSource(
+      children: playlist.map((url) => AudioSource.uri(Uri.parse(url))).toList(),
     ));
+    audioPlayer.load();
+  }
+
+  void skipTrack() {
+    audioPlayer.seekToNext();
+  }
+
+  void previousTrack() {
+    audioPlayer.seekToPrevious();
   }
 }

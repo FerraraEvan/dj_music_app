@@ -6,7 +6,7 @@ class FireBaseService{
 
   Future<void> initializeDb() async {
     db = FirebaseFirestore.instance;
-    stream = db.collection("user").snapshots();
+    stream = db.collection("track").snapshots();
   }
 
   Future<void> removeMusic(String name,String trackName,String id) async {
@@ -16,5 +16,4 @@ class FireBaseService{
     .where('id', isEqualTo: id)
     .get().then((value) => value.docs.first.reference.delete());
   }
-  
 }
