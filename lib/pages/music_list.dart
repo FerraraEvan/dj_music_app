@@ -22,7 +22,7 @@ class _MusicListState extends State<MusicList> {
 
   @override
   Widget build(BuildContext context) {
-  //fireBaseService.initializeDb();
+  fireBaseService.initializeDb();
   List<String> playlist = [];
     return Scaffold(
       appBar: AppBar(
@@ -41,7 +41,7 @@ class _MusicListState extends State<MusicList> {
                   itemCount: snapshot.data.docs.length,
                   itemBuilder: (context, index) {
                     return ListTile(
-                      leading: Text(index.toString()),
+                      leading: Text((index+1).toString()),
                       title: Text(snapshot.data.docs[index]['trackName']+" - "+snapshot.data.docs[index]['artist']),
                       subtitle: Text("Ajouté par "+snapshot.data.docs[index]['name']),
                       trailing: IconButton(
@@ -83,35 +83,43 @@ class _MusicListState extends State<MusicList> {
 
   IconButton initializeIconButton() {
     return isPlaying ? IconButton(
-                onPressed: () {
+                onPressed: () async {
                     setState(() {
-                      isPlaying = true;
+                      isPlaying = !isPlaying;
                     });
-                    audioPlayer.pause();
+                    await audioPlayer.pause();
                 }, 
                 icon: const Icon(Icons.pause))
                 : IconButton( 
-                  onPressed: () {
-                  audioPlayer.play();
+                  onPressed: () async {
+                    setState(() {
+                      isPlaying = !isPlaying;
+                    });
+                  await audioPlayer.play();
                   }, 
                   icon: const Icon(Icons.play_arrow));
   }
 
-  void listenPlaylist(AsyncSnapshot<dynamic> snapshot, List<String> playlist) {
+  Future<void> listenPlaylist(AsyncSnapshot<dynamic> snapshot, List<String> playlist) async {
+    try{
     for (int i = 0; i < snapshot.data.docs.length; i++) {
       playlist.add(snapshot.data.docs[i]['url']);
     }
-      audioPlayer.setAudioSource(ConcatenatingAudioSource(
+      await audioPlayer.setAudioSource(ConcatenatingAudioSource(
       children: playlist.map((url) => AudioSource.uri(Uri.parse(url))).toList(),
     ));
-    audioPlayer.load();
+    await audioPlayer.load();
+    }
+    catch(e){
+      print("exception$e");
+    }
   }
 
-  void skipTrack() {
-    audioPlayer.seekToNext();
+  Future<void> skipTrack() async {
+    await audioPlayer.seekToNext();
   }
 
-  void previousTrack() {
-    audioPlayer.seekToPrevious();
+  Future<void> previousTrack() async {
+    await audioPlayer.seekToPrevious();
   }
 }
